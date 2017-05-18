@@ -73,26 +73,14 @@ plt.show()
 
 tskyHist = []
 for k in range(3):
-	dum = []
-	for j in range(0, i, 40):
-		temp = np.mean(tsky[k][j:j+40])
-		dum.append(temp)
+	dum = [np.mean(tsky[k][j:j+40]) for j in range(0, i, 40)]
 	tskyHist.append(dum)
 
-xvalueHist = []
-for j in range(0, i, 40):
-	temp = 0
-	for jj in range(j, j+40):
-		temp = temp + xvalues[0][jj]
-	temp = temp/40
-	xvalueHist.append(temp)
+xvalueHist = [np.mean(xvalues[0][j:j+40]) for j in range(0, i, 40)]
 
 sd = []
 for k in range(3):
-	dum = []
-	for j in range(0, i, 40):
-		temp = np.std(tsky[k][j:j+40])
-		dum.append(temp)
+	dum = [np.std(tsky[k][j:j+40]) for j in range(0, i, 40)]
 	sd.append(dum)
 
 f = plt.figure()
