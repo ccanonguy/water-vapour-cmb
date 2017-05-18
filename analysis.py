@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import csv
 from pprint import pprint
+import numpy as np
 
 
 power = []
@@ -74,10 +75,7 @@ tskyHist = []
 for k in range(3):
 	dum = []
 	for j in range(0, i, 40):
-		temp = 0
-		for jj in range(j, j+40):
-			temp = temp + tsky[k][jj]
-		temp = temp/40
+		temp = np.mean(tsky[k][j:j+40])
 		dum.append(temp)
 	tskyHist.append(dum)
 
@@ -89,11 +87,19 @@ for j in range(0, i, 40):
 	temp = temp/40
 	xvalueHist.append(temp)
 
+sd = []
+for k in range(3):
+	dum = []
+	for j in range(0, i, 40):
+		temp = np.std(tsky[k][j:j+40])
+		dum.append(temp)
+	sd.append(dum)
+
 f = plt.figure()
 plotNum = 1
 for k in range(3):
 	ax = f.add_subplot(2, 2, plotNum)
-	plt.scatter(xvalueHist, tskyHist[k])
+	plt.errorbar(xvalueHist, tskyHist[k], yerr=sd[k], fmt='o')
 	plt.title("Observation " + str(k+1))
 	plt.xlabel("Frequency")
 	plt.ylabel("Tsky")
