@@ -5,8 +5,8 @@ from pprint import pprint
 
 power = []
 xvalues = []
-for k in range(15):
-	filename = "Trace_000" + str(k) + ".csv"
+for k in range(9):
+	filename = "trace_000" + str(k+1) + ".csv"
 	bandwidth = 10000000000
 	x = []
 	y = []
@@ -15,12 +15,10 @@ for k in range(15):
 	with open(filename) as csvfile:						# open file as csvfile
 		reader = csv.DictReader(csvfile, ['frequency', 'power'])		# read file as dict
 		for row in reader:
-			i = i +1
-			if i<46:
-				continue
 			x.append(float(row['frequency']))								# append list of x
 			y.append(float(row['power']))							# append list of y
-	i = i - 45
+			i = i +1
+
 	for j in range(i):
 		z.append(float(0.001*(10**(y[j]/10))))
 
@@ -29,34 +27,30 @@ for k in range(15):
 delf = float(bandwidth)/i;
 
 tnoise = []
-for k in range(6):
+for k in range(3):
 	dum = []
 	for j in range(i):
 		dum.append((300.0*power[2*k+1][j] - 77*power[2*k][j])/(power[2*k][j] - power[2*k+1][j]))
 	tnoise.append(dum)
 
-tnoiseAvg = []
-for j in range(i):
-	tnoiseAvg.append((tnoise[0][j] + tnoise[1][j] + tnoise[2][j] + tnoise[3][j] + tnoise[4][j] + tnoise[5][j])/6)
-
-
 gain = []
-for k in range(6):
+for k in range(3):
 	dum = []
 	for j in range(i):
 		dum.append(power[2*k][j]/(1.38*10**(-23)*delf*(300.0 + tnoise[k][j])))
 	gain.append(dum)
 
-gainAvg = []
-for j in range(i):
-	gainAvg.append((gain[0][j] + gain[1][j] + gain[2][j] + gain[3][j] + gain[4][j] + gain[5][j])/6)
-
 tsky = []
 for k in range(3):
 	dum = []
 	for j in range(i):
-		dum.append(power[12+k][j]/(gainAvg[j]*1.38*10**(-23)*delf) - tnoiseAvg[j])
+		dum.append(power[6+k][j]/(gain[k][j]*1.38*10**(-23)*delf) - tnoise[k][j])
 	tsky.append(dum)
+
+plt.figure()
+plt.scatter(xvalues[0], tnoise[0])
+plt.ylim(0, 5000)
+plt.show()
 
 f = plt.figure()
 plotNum = 1
@@ -66,6 +60,6 @@ for k in range(3):
 	plt.title("Observation " + str(k+1))
 	plt.xlabel("Frequency")
 	plt.ylabel("Tsky")
-	plt.ylim((-100, 150))	
+	plt.ylim((-100, 100))	
 	plotNum = plotNum + 1
 plt.show()
