@@ -69,3 +69,34 @@ for k in range(3):
 	plt.ylim((-100, 150))	
 	plotNum = plotNum + 1
 plt.show()
+
+tskyHist = []
+for k in range(3):
+	dum = []
+	for j in range(0, i, 40):
+		temp = 0
+		for jj in range(j, j+40):
+			temp = temp + tsky[k][jj]
+		temp = temp/40
+		dum.append(temp)
+	tskyHist.append(dum)
+
+xvalueHist = []
+for j in range(0, i, 40):
+	temp = 0
+	for jj in range(j, j+40):
+		temp = temp + xvalues[0][jj]
+	temp = temp/40
+	xvalueHist.append(temp)
+
+f = plt.figure()
+plotNum = 1
+for k in range(3):
+	ax = f.add_subplot(2, 2, plotNum)
+	plt.scatter(xvalueHist, tskyHist[k])
+	plt.title("Observation " + str(k+1))
+	plt.xlabel("Frequency")
+	plt.ylabel("Tsky")
+	plt.ylim((-100, 150))	
+	plotNum = plotNum + 1
+plt.show()
