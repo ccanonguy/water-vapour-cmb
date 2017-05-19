@@ -138,22 +138,23 @@ final = []
 bestfit = []
 fitMethod='powell'
 for k in range(3):
-	params = Parameters()
-	params.add('m', value=5)
-	params.add('c', value=50)
-	minner = Minimizer(linearFit, params, fcn_args=(np.append(xvalueHist[0:6], xvalueHist[31:]),
-													np.append(tskyHist[k][0:6], tskyHist[k][31:]),
-													np.append(sd[k][0:6], sd[k][31:])))
-	result = minner.minimize(method=fitMethod)
-	m = result.params['m'].value
-	c = result.params['c'].value
-	fittedParams = {'m': m, 'c': c}
+	fittedParams = {}
+	# params = Parameters()
+	# params.add('m', value=5)
+	# params.add('c', value=50)
+	# minner = Minimizer(linearFit, params, fcn_args=(np.append(xvalueHist[0:6], xvalueHist[31:]),
+	# 												np.append(tskyHist[k][0:6], tskyHist[k][31:]),
+	# 												np.append(sd[k][0:6], sd[k][31:])))
+	# result = minner.minimize(method=fitMethod)
+	# m = result.params['m'].value
+	# c = result.params['c'].value
+	# fittedParams = {'m': m, 'c': c}
 
 
 	params = Parameters()
 	params.add('pwv', value=4., min=0.1, max=10)
-	params.add('m', value=m, vary=False)
-	params.add('c', value=c, vary=False)
+	params.add('m', value=50, min=-100)
+	params.add('c', value=50, min=-100)
 	minner = Minimizer(residual, params, fcn_args=(xvalueHist, tskyHist[k], sd[k]))
 	result = minner.minimize(method=fitMethod)
 	fittedParams['pwv'] = result.params['pwv'].value
@@ -166,13 +167,13 @@ for k in range(3):
 f = plt.figure()
 plotNum = 1
 for k in range(3):
-	m = bestfit[k]['m']
-	c = bestfit[k]['c']
-	lin = map(lambda t: t*m, xvalueHist) + np.full(len(xvalueHist), c)
+	# m = bestfit[k]['m']
+	# c = bestfit[k]['c']
+	# lin = map(lambda t: t*m, xvalueHist) + np.full(len(xvalueHist), c)
 	ax = f.add_subplot(2, 2, plotNum)
 	plt.errorbar(xvalueHist, tskyHist[k], yerr=sd[k], fmt='o')
 	plt.plot(xvalueHist, final[k])
-	plt.plot(xvalueHist, lin)
+	# plt.plot(xvalueHist, lin)
 	ax.text(0.4, 0.1, str(bestfit[k]['pwv']) + ' mm PWV', transform=ax.transAxes)
 	plt.title("Observation " + str(k+1))
 	plt.xlabel("Frequency")
