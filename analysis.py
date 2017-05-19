@@ -85,13 +85,13 @@ for k in range(3):
 	dum = [np.std(tsky[k][j:j+40]) for j in range(0, i, 40)]
 	sd.append(dum)
 
-xvalueHist = xvalueHist[8:]
-tskyHist[0] = tskyHist[0][8:]
-tskyHist[1] = tskyHist[1][8:]
-tskyHist[2] = tskyHist[2][8:]
-sd[0] = sd[0][8:]
-sd[1] = sd[1][8:]
-sd[2] = sd[2][8:]
+xvalueHist = xvalueHist[11:]
+tskyHist[0] = tskyHist[0][11:]
+tskyHist[1] = tskyHist[1][11:]
+tskyHist[2] = tskyHist[2][11:]
+sd[0] = sd[0][11:]
+sd[1] = sd[1][11:]
+sd[2] = sd[2][11:]
 
 np.asarray(xvalueHist, dtype=np.float64)
 np.asarray(tskyHist, dtype=np.float64)
@@ -113,29 +113,51 @@ pwd = "/home/gurbir/kek/water-vapour-cmb/am/"
 def pwv2trop(pwv):
 	return (float(pwv)-0.0029)/1.8502
 
+def linearFit(p, x, data, sd):
+	m = p['m']
+	c = p['c']
+	return (map(lambda t: t*m, x) + np.full(len(x), c) - data)/sd
+
 def residual(p, x, data, sd):
 	pwv = p['pwv']
+	m = p['m']
+	c = p['c']
 	trop_h20_scale = pwv2trop(pwv)
-	call("am " + pwd + "northern_midlatitude_MAM.amc 18198349174.587299 Hz" + 
-		" 26602551275.637801 Hz 200100050.025 Hz 0 deg " +  str(trop_h20_scale) +
+	call("am " + pwd + "northern_midlatitude_MAM.amc " + str(xvalueHist[0]) + 
+		" Hz 26602551275.637801 Hz 200100050.025 Hz 0 deg " +  str(trop_h20_scale) +
 		" > amModel.out", shell=True)
 	f = open('amModel.out', 'r')
 	y = []
 	for line in f:
 		words = line.split(' ')
 		y.append(words[1])
-	y = np.asarray(y, dtype=np.float64)
+	y = np.asarray(y, dtype=np.float64) + map(lambda t: t*m, x) + np.full(len(y), c)
 	return np.divide(np.subtract(y, data), sd)
 
 final = []
 bestfit = []
+fitMethod='powell'
 for k in range(3):
 	params = Parameters()
-	params.add('pwv', value=2., min=0.1, max=10)
+	params.add('m', value=5)
+	params.add('c', value=50)
+	minner = Minimizer(linearFit, params, fcn_args=(np.append(xvalueHist[0:6], xvalueHist[31:]),
+													np.append(tskyHist[k][0:6], tskyHist[k][31:]),
+													np.append(sd[k][0:6], sd[k][31:])))
+	result = minner.minimize(method=fitMethod)
+	m = result.params['m'].value
+	c = result.params['c'].value
+	fittedParams = {'m': m, 'c': c}
 
+
+	params = Parameters()
+	params.add('pwv', value=4., min=0.1, max=10)
+	params.add('m', value=m, vary=False)
+	params.add('c', value=c, vary=False)
 	minner = Minimizer(residual, params, fcn_args=(xvalueHist, tskyHist[k], sd[k]))
-	result = minner.minimize(method='nelder')
-	bestfit.append(result.params['pwv'].value)
+	result = minner.minimize(method=fitMethod)
+	fittedParams['pwv'] = result.params['pwv'].value
+	bestfit.append(fittedParams)
 
 	final.append(tskyHist[k] + np.multiply(result.residual, sd[k]))
 
@@ -144,10 +166,14 @@ for k in range(3):
 f = plt.figure()
 plotNum = 1
 for k in range(3):
+	m = bestfit[k]['m']
+	c = bestfit[k]['c']
+	lin = map(lambda t: t*m, xvalueHist) + np.full(len(xvalueHist), c)
 	ax = f.add_subplot(2, 2, plotNum)
 	plt.errorbar(xvalueHist, tskyHist[k], yerr=sd[k], fmt='o')
 	plt.plot(xvalueHist, final[k])
-	ax.text(0.4, 0.1, str(bestfit[k]) + ' mm PWV', transform=ax.transAxes)
+	plt.plot(xvalueHist, lin)
+	ax.text(0.4, 0.1, str(bestfit[k]['pwv']) + ' mm PWV', transform=ax.transAxes)
 	plt.title("Observation " + str(k+1))
 	plt.xlabel("Frequency")
 	plt.ylabel("Tsky")
